@@ -1,0 +1,34 @@
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+<script>
+	var user = "user1"
+
+	function setHeader(xhr) {xhr.setRequestHeader('Authorization', 'AIzaSyBOmn0buoygs0rQTnO3MJcZ15PQorMlKk0'); }
+
+
+
+
+	$(document).ready(function() {
+
+		var my_url = "http://tdp-hackathon-2016.appspot.com/test"
+		alert('yo')
+		$.ajax({
+			url: my_url
+			, type: 'GET'
+			, dataType: 'jsonp'
+			, crossDomain: true
+			}).done(function(data) {
+
+			alert('hey')
+		});
+	});
+
+
+
+</script>
+
+<div id="my_div">
+
+
+</div>
