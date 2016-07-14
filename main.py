@@ -42,20 +42,15 @@ class MainHandler(webapp2.RequestHandler):
 	def get(self):
 		user = users.get_current_user()
 		if user:
-			nickname = user.nickname()
-			logout_url = users.create_logout_url('/')
-			greeting = 'Welcome, {}! (<a href="{}">sign out</a>)'.format(
-				nickname, logout_url)
-
-			# self.response.write(Bag.get_user_bag_key(user))
-
+		
+			self.redirect("welcome")
 
 		else:
-			login_url = users.create_login_url('/')
-			greeting = '<a href="{}">Sign in</a>'.format(login_url)
+			template_data = {}
+			template_data['login_url'] = users.create_login_url("welcome")
 
-		self.response.write(
-			'<html><body>{}</body></html>'.format(greeting))
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
 
 
 class AdminHandler(webapp2.RequestHandler):
@@ -362,6 +357,8 @@ class HomeHandler(webapp2.RequestHandler):
 
 		total_price = 0
 
+		logout_url = users.create_logout_url("/")
+
 		relations = []
 		for item in items:
 			relations += ItemRoomRelation.query(ancestor=inventory.key).filter(ItemRoomRelation.item==item.key).fetch()
@@ -383,6 +380,7 @@ class HomeHandler(webapp2.RequestHandler):
 		template_data = {}
 		template_data['relations'] = relation_data
 		template_data['total_price'] = "${0:.2f}".format(total_price)
+		template_data['logout_url'] = logout_url
 
 		template = JINJA_ENVIRONMENT.get_template('userHomePage.html')
 		self.response.write(template.render(template_data))
