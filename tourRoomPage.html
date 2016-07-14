@@ -92,16 +92,12 @@
 
   		<!-- - -->
   		<!-- - -->
-  		
-
-  		<a class="roomButtons btn btn-primary" href="tourItemPage.html" role="button">Living Room</a> <br><br>
-  		<a class="roomButtons btn btn-primary" href="#" role="button">Kitchen</a><br><br>
-  		<a class="roomButtons btn btn-primary" href="#" role="button">Garage</a><br><br>
-  		<a class="roomButtons btn btn-primary" href="#" role="button">Bedroom</a><br><br>
+      {% for room in rooms %}
+  		  <a class="roomButtons btn btn-primary" href="/room?={{room.encoded }}" role="button">{{ room.name }}</a> <br><br>
+      {% endfor %}
 
   		<!-- - -->
   		<!-- - -->
-
 
   </div>
   <div class="col-md-1"></div>

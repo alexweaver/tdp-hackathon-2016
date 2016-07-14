@@ -17,35 +17,44 @@
 
 import logging
 
+import urllib
 import json
 import webapp2
-from models import Bag
 from models import Item
 from models import Room
-from models import AppUser
+from models import Residence
+from models import Inventory
 from google.appengine.api import users
+
+import jinja2
+import os
+
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    extensions=['jinja2.ext.autoescape'],
+    autoescape=True)
 
 from google.appengine.ext.webapp import template
 
 class MainHandler(webapp2.RequestHandler):
 
-    def get(self):
-        user = users.get_current_user()
-        if user:
-            nickname = user.nickname()
-            logout_url = users.create_logout_url('/')
-            greeting = 'Welcome, {}! (<a href="{}">sign out</a>)'.format(
-                nickname, logout_url)
+	def get(self):
+		user = users.get_current_user()
+		if user:
+			nickname = user.nickname()
+			logout_url = users.create_logout_url('/')
+			greeting = 'Welcome, {}! (<a href="{}">sign out</a>)'.format(
+				nickname, logout_url)
 
-            self.response.write(Bag.get_user_bag_key(user))
+			self.response.write(Bag.get_user_bag_key(user))
 
 
-        else:
-            login_url = users.create_login_url('/')
-            greeting = '<a href="{}">Sign in</a>'.format(login_url)
+		else:
+			login_url = users.create_login_url('/')
+			greeting = '<a href="{}">Sign in</a>'.format(login_url)
 
-        self.response.write(
-            '<html><body>{}</body></html>'.format(greeting))
+		self.response.write(
+			'<html><body>{}</body></html>'.format(greeting))
 
 
 class AdminHandler(webapp2.RequestHandler):
@@ -258,11 +267,73 @@ class RoomItemHandler(webapp2.RequestHandler):
 
 
 
-class TourHandler(webapp2.RequestHandler):
+class ResidenceTourHandler(webapp2.RequestHandler):
 
 	def get(self):
 
-		self.response.write(template.render('rooms.html', {}))
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/welcome')
+			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
+			return
+
+		residence = Residence.get_residence_by_user(user)
+
+		rooms = Room.query().fetch()
+		discovered = Room.query(ancestor=residence.key).fetch()
+		undiscovered = []
+
+		for room in rooms:
+			if room not in discovered:
+				data = {"name": room.name, "encoded": urllib.quote(room.name)}
+				undiscovered.append(data)
+
+		template = JINJA_ENVIRONMENT.get_template('tourRoomPage.html')
+		template_data = {'rooms': undiscovered}
+
+		self.response.write(template.render(template_data))
+
+
+class RoomTourHandler(webapp2.RequestHandler):
+
+	def get(self):
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/welcome')
+			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
+			return
+
+		room = self.request.get("room")
+
+		if room is '':
+			self.response.write("no room specified")
+			return
+
+		residence = Residence.get_residence_by_user(user)
+		
+		
+
+		rooms = Room.query(Room.name==room).get()
+
+
+
+		rooms = Room.query().fetch()
+		discovered = Room.query(ancestor=residence.key).fetch()
+		undiscovered = []
+
+		for room in rooms:
+			if room not in discovered:
+				data = {"name": room.name, "encoded": urllib.quote(room.name)}
+				undiscovered.append(data)
+
+		template = JINJA_ENVIRONMENT.get_template('tourRoomPage.html')
+		template_data = {'rooms': undiscovered}
+
+		self.response.write(template.render(template_data))
+
 
 class TestHandler(webapp2.RequestHandler):
 
@@ -270,16 +341,17 @@ class TestHandler(webapp2.RequestHandler):
 		self.response.write("bob")
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
-    , ('/items', ItemHandler)
-    , ('/rooms', RoomHandler)
-    , ('/admin', AdminHandler)
-    , ('/price', PriceHandler)
-    , ('/value', ValueHandler)
-    , ('/bag', BagHandler)
-    , ('/tour', TourHandler)
-    , ('/room-items', RoomItemHandler)
-    , ('/test', TestHandler)
+	('/', MainHandler)
+	, ('/items', ItemHandler)
+	, ('/rooms', RoomHandler)
+	, ('/admin', AdminHandler)
+	, ('/price', PriceHandler)
+	, ('/value', ValueHandler)
+	, ('/bag', BagHandler)
+	, ('/residence-tour', ResidenceTourHandler)
+	, ('/room-tour', RoomTourHandler)
+	, ('/room-items', RoomItemHandler)
+	, ('/test', TestHandler)
 ], debug=True)
 
 

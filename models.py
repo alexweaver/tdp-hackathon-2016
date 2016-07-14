@@ -1,6 +1,7 @@
 
 from google.appengine.ext import ndb
 
+import logging
 
 class AppUser(ndb.Model):
 
@@ -8,17 +9,17 @@ class AppUser(ndb.Model):
 
 class Inventory(ndb.Model):
 
-    user_id = ndb.StringProperty()
+	user_id = ndb.StringProperty()
 
-    @staticmethod
-    def get_inventory_by_user(user):
-    	inventory = Inventory.query(Inventory.user_id==user.user_id()).get()
+	@staticmethod
+	def get_inventory_by_user(user):
+		inventory = Inventory.query(Inventory.user_id==user.user_id()).get()
 
-    	if inventory is None:
-    		inventory = Inventory(user_id=user.user_id())
-    		inventory.put()
+		if inventory is None:
+			inventory = Inventory(user_id=user.user_id())
+			inventory.put()
 
-    	return inventory
+		return inventory
 
 class Residence(ndb.Model):
 
@@ -26,13 +27,18 @@ class Residence(ndb.Model):
 
 	@staticmethod
 	def get_residence_by_user(user):
-    	residence = Residence.query(Residence.user_id==username).get()
 
-    	if residence is None:
-    		residence = Residence(user_id=user.user_id())
-    		residence.put()
+		logging.debug("1")
+		residence = Residence.query(Residence.user_id==user.user_id()).get()
 
-    	return residence
+		logging.debug("2")
+
+		if residence is None:
+			residence = Residence(user_id=user.user_id())
+			residence.put()
+
+		logging.debug("bo")
+		return residence
 
 class Item(ndb.Model):
 
