@@ -419,6 +419,7 @@ class AddItemHandler(webapp2.RequestHandler):
 		template_data["category"] = category
 		template_data["price"] = "{0:.2f}".format(price)
 		template_data["room"] = room
+		template_data['back_url'] = "/home" if room == "no room" else "/room-tour?room=" + room
 		
 		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
 		self.response.write(template.render(template_data))
@@ -463,6 +464,8 @@ class AddItemHandler(webapp2.RequestHandler):
 		if room_name == "no room":
 			self.redirect("/home")
 			return
+
+
 
 		self.redirect("/room-tour?room=" + urllib.quote(room_name))
 

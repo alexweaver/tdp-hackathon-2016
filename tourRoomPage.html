@@ -108,7 +108,7 @@
       </form>
       <br>
       {% for room in rooms %}
-  		  <a class="roomButtons btn btn-primary" href="/room-tour?room={{ room[0] }}" role="button">{{ room[0] }} {{ room[1] }} </a> <br><br>
+  		  <a class="roomButtons btn btn-primary" href="/room-tour?room={{ room[0] }}" role="button">{{ room[0] }} <span class="badge" style="background-color:white; float:right">{{room[1]}}</span></a> <br><br>
       {% endfor %}
 
   		<!-- - -->
