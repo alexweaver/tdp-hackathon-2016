@@ -86,11 +86,31 @@
   <div class="col-md-1"></div>
   <div class="col-md-10" style="text-align: center;">
   		<h3>Total Inventory Value:</h3>
-  		<h1 class="priceText">$324</h1>
+  		<h1 class="priceText">{{ total_price }}</h1>
   		<br>
   		Inventory Items :
   		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 		  
+
+
+{% for room in relations %}
+{% for item in relations[room] %}
+
+		  <div class="panel panel-default">
+		    <div class="panel-heading" role="tab" id="headingOne" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+		      <h4 class="panel-title">
+		          {{ item.category }} 
+		      </h4>
+		    </div>
+		    <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+		      <div class="panel-body">
+		        Price: something Category: Something <a class="btn btn-default" href="#" role="button">Edit</a> <a class="btn btn-danger" href="#" role="button">Delete</a>
+		      </div>
+		    </div>
+		  </div>
+
+{% endfor %}
+{% endfor %}
 		  <div class="panel panel-default">
 		    <div class="panel-heading" role="tab" id="headingOne" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
 		      <h4 class="panel-title">
@@ -128,5 +148,6 @@
 <h3 style="vertical-align: middle; color: white;"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Item</h3>
 </a>
 </body>
+
 
 </html>

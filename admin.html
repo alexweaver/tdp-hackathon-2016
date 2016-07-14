@@ -1,0 +1,31 @@
+<h1>Items</h1>
+<table border="1px">
+	<tr>
+		<th>Name</th>
+		<th>Category</th>
+		<th>Price</th>
+		<th>Delete</th>
+	</tr>
+
+    {% for item in items %}
+    <tr>
+    	<td>{{ item.name }}</td>
+		<td>{{ item.category }}</td>
+		<td>{{ item.price }}</td>
+		<td><a href="delete?name={{ item.encoded }}">Delete</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h1>Rooms</h1>
+<table border="1px">
+	<tr>
+		<th>Name</th>
+	</tr>
+
+    {% for room in rooms %}
+    <tr>
+    	<td>{{ room.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
