@@ -333,6 +333,8 @@ class RoomTourHandler(webapp2.RequestHandler):
 		residence = Residence.get_residence_by_user(user)
 		room = Room.query(ancestor=residence.key).filter(Room.name==name).get()
 
+		# ex_residences = Residence.query().fetch() if residence.own is None else Residence.query(Residence.own==residence.own)
+
 		if room is None:
 			room = Room(name=name, parent=residence.key)
 			room.put()
@@ -340,10 +342,33 @@ class RoomTourHandler(webapp2.RequestHandler):
 
 		# get all items for the rooms with the same name
 
-		items = Item.query()
+		example_rooms = Room.query(Room.name==room.name)
+		
+		relations = []
+		for example_room in example_rooms:
+			relations.append(ItemRoomRelation.query(ItemRoomRelation.room==example_room.key).fetch())
+
+		items = []
+		categories = []
+		for relation in relations:
+			category = relation.item.category
+			item = relation.item
+			
+
+		# if residence.own is None:
+		# 	rooms = ItemRoomRelation.
+		# 	relation = ItemRoomRelation.query(ItemRoomRelation.)
+		# 		item["price"] = Item
+		# for item in items:
+		# 	item 
+
+
+
 
 		template = JINJA_ENVIRONMENT.get_template('tourItemPage.html')
 		template_data = {'items': items}
+
+
 
 		self.response.write(template.render(template_data))
 
@@ -402,6 +427,27 @@ class AddItemHandler(webapp2.RequestHandler):
 		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
 		self.response.write(template.render(template_data))
 
+class WelcomeHandler(webapp2.RequestHandler):
+
+	def get(self):
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/home')
+
+			template_data = {}
+			template_data['login_url'] = login_url
+
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
+			return
+
+		template_data = {}
+
+		template = JINJA_ENVIRONMENT.get_template('landingPage.html')
+		self.response.write(template.render(template_data))
+
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
 	, ('/items', ItemHandler)
@@ -415,6 +461,7 @@ app = webapp2.WSGIApplication([
 	, ('/room-items', RoomItemHandler)
 	, ('/add', AddItemHandler)
 	, ('/home', HomeHandler)
+	, ('/welcome', WelcomeHandler)
 
 ], debug=True)
 
