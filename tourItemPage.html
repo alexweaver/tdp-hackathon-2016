@@ -76,6 +76,8 @@
 	width: 100%;
 }
 
+
+
 </style>
 <meta charset="UTF-8">
 </head>
@@ -114,7 +116,7 @@
       <br>
 
       {% for item in items %}
-        <a class="roomButtons btn btn-primary" href="/add?category={{item.category}}" role="button">
+        <a class="roomButtons btn btn-warning" href="/add?category={{item.category}}" role="button">
           {{ item.category }}
         </a> <br><br>
       {% endfor %}
