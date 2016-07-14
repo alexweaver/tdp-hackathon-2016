@@ -110,8 +110,8 @@
   		<form method="post" action="/add">
         <input type="hidden" name="room" value="{{ room }}"></input>
         <div class="form-group">
-          <label class="leftFloat" for="exampleInputEmail1">Name</label>
-          <input type="text" class="form-control" id="exampleInputEmail1" placeholder="Enter the name of the product">
+          <label name="name" class="leftFloat" for="exampleInputEmail1">Name</label>
+          <input name="name" type="text" class="form-control" id="exampleInputEmail1" placeholder="Enter the name of the product">
         </div>
         <div class="form-group">
           <label class="leftFloat" for="exampleInputPassword1">Price</label>
@@ -119,7 +119,7 @@
         </div>
         <div class="form-group">
         <label class="leftFloat" for="exampleInputPassword1">Category</label>
-        <input type="text" class="form-control" id="category" value="{{ category }}"></input>
+        <input type="text" name="category" class="form-control" id="category" value="{{ category }}"></input>
         </div>
 
         <button type="submit" class="btn btn-default">Submit</button>

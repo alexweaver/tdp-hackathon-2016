@@ -62,43 +62,33 @@ class AdminHandler(webapp2.RequestHandler):
 
 	def get(self):
 
-		self.response.write('add room')
-		self.response.write('<form method="post" action="/rooms">')
-		self.response.write('Name<input type=text name="name"></input>')
-		self.response.write('Items<input type=text name="items"></input>')
-		self.response.write('Own<input type=checkbox name="own"></input>')
-		self.response.write('Rent<input type=checkbox name="rent"></input>')
-		self.response.write('<input type=submit></input>')
-		self.response.write('</form>')
+		items = Item.query().fetch()
+		rooms = Room.query().fetch()
+		relations = ItemRoomRelation.query().fetch()
 
-		self.response.write('<table>')
-		self.response.write('<tr><th>Name</th><th>Items</th><th>Own</th><th>Rent</th><th>Popularity</th></tr>')
+		item_dicts = []
+		for item in items:
+			item_data = {}
+			item_data["name"] = item.name
+			item_data["category"] = item.category
+			item_data["price"] = item.price
+			item_data["encoded"] = urllib.quote(item.name)
+			item_dicts.append(item_data)
 
-		for room in Room.query().fetch():
-			self.response.write('<tr>')
-			self.response.write('<td>' + str(room.name) + '</td>')
-			self.response.write('</tr>')
-		self.response.write('</table>')
+		room_dicts = []
+		for room in rooms:
+			room_data = {}
+			room_data["name"] = room.name
+			room_dicts.append(room_data)
 
-		self.response.write('add item')
-		self.response.write('<form method="post" action="/items">')
-		self.response.write('Name <input type=text name="name"></input>')
-		self.response.write('Category <input type=text name="category"></input>')
-		self.response.write('Price <input type=text name="price"></input>')
-		self.response.write('User <input type=text name="user"></input>')
-		self.response.write('<input type=submit></input>')
-		self.response.write('</form>')
+		template_data = {}
+		template_data['items'] = item_dicts
+		template_data['rooms'] = room_dicts
+		template_data['relations'] = relations
 
-		self.response.write('<table>')
-		self.response.write('<tr><th>Name</th><th>Category</th><th>Price</th></tr>')
 
-		for item in Item.query().fetch():
-			self.response.write('<tr>')
-			self.response.write('<td>' + str(item.name) + '</td>')
-			self.response.write('<td>' + str(item.category) + '</td>')
-			self.response.write('<td>' + str(item.price) + '</td>')
-			self.response.write('</tr>')
-		self.response.write('</table>')
+		template = JINJA_ENVIRONMENT.get_template('admin.html')
+		self.response.write(template.render(template_data))
 
 
 	# def post(self):
@@ -149,8 +139,6 @@ class RoomHandler(webapp2.RequestHandler):
 # Create item
 
 class ItemHandler(webapp2.RequestHandler):
-
-
 
 
 
@@ -346,9 +334,29 @@ class HomeHandler(webapp2.RequestHandler):
 		inventory = Inventory.get_inventory_by_user(user)
 		items = Item.query(ancestor=inventory.key).fetch()
 
-		template_data = {}
-		template_data['inventory'] = items
+		total_price = 0
 
+		relations = []
+		for item in items:
+			relations += ItemRoomRelation.query(ItemRoomRelation.item==item.key).fetch()
+			total_price += item.price
+
+		relation_data = {}
+		for relation in relations:
+			item = relation.item.get()
+			item_data = {'category': item.category, 'name': item.name, 'price': item.price}
+
+			if relation.room.get().name in relation_data:
+				relation_data[relation.room.get().name].append(item_data)
+				continue
+			relation_data[str(relation.room.get().name)] = [item_data]
+			logging.error(relation)
+
+		logging.error(relation_data)
+
+		template_data = {}
+		template_data['relations'] = relation_data
+		template_data['total_price'] = "${0:.2f}".format(total_price)
 
 		template = JINJA_ENVIRONMENT.get_template('userHomePage.html')
 		self.response.write(template.render(template_data))
@@ -408,7 +416,7 @@ class AddItemHandler(webapp2.RequestHandler):
 		inventory = Inventory.get_inventory_by_user(user)
 		item = Item(category=category, name=name, price=price, parent=inventory.key)
 		item.put()
-
+		logging.error(item)
 		room_name = self.request.get("room")
 		if room_name is not '':
 			residence = Residence.get_residence_by_user(user)
@@ -445,9 +453,35 @@ class WelcomeHandler(webapp2.RequestHandler):
 		template = JINJA_ENVIRONMENT.get_template('landingPage.html')
 		self.response.write(template.render(template_data))
 
+
+class DeleteItemHandler(webapp2.RequestHandler):
+
+	def get(self):
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/welcome')
+			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
+			return
+
+		name = self.request.get("name")
+
+		inventory = Inventory.get_inventory_by_user(user)
+		item = Item.query(ancestor=inventory.key).filter(Item.name==name).get()
+
+
+		if item is not None:
+			for relation in ItemRoomRelation.query(ItemRoomRelation.item==item.key).fetch():
+				relation.key.delete()
+			item.key.delete()
+
+		self.redirect("admin")
+
+
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
-	, ('/items', ItemHandler)
+	, ('/item', ItemHandler)
 	, ('/room', RoomHandler)
 	, ('/admin', AdminHandler)
 	, ('/price', PriceHandler)
@@ -459,6 +493,7 @@ app = webapp2.WSGIApplication([
 	, ('/add', AddItemHandler)
 	, ('/home', HomeHandler)
 	, ('/welcome', WelcomeHandler)
+	, ('/delete', DeleteItemHandler)
 	
 ], debug=True)
 
