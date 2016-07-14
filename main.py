@@ -287,7 +287,7 @@ class RoomTourHandler(webapp2.RequestHandler):
 
 		if name is '':
 			self.response.write("no room specified")
-			return
+			ResidenceTourHandler
 
 		residence = Residence.get_residence_by_user(user)
 		room = Room.query(ancestor=residence.key).filter(Room.name==name).get()
@@ -302,13 +302,20 @@ class RoomTourHandler(webapp2.RequestHandler):
 		for other_room in other_rooms:
 			relations += ItemRoomRelation.query(ItemRoomRelation.room==other_room.key).fetch()
 
-		items = []
+
+		item_count = {}
 		for relation in relations:
-			items.append(relation.item.get())
+			category = relation.item.get().category
+			if category in item_count:
+				item_count[category] += 1
+				continue
+			item_count[category] = 1
+
+		item_count = sorted(item_count.items(), key=lambda x: x[1], reverse=True)
 
 		template = JINJA_ENVIRONMENT.get_template('tourItemPage.html')
 		template_data = {}
-		template_data['items'] = items
+		template_data['items'] = item_count
 		template_data['room'] = room.name
 
 
@@ -332,13 +339,13 @@ class HomeHandler(webapp2.RequestHandler):
 			return
 
 		inventory = Inventory.get_inventory_by_user(user)
-		items = Item.query(ancestor=inventory.key).fetch()
+		items = inventory.get_items().fetch()
 
 		total_price = 0
 
 		relations = []
 		for item in items:
-			relations += ItemRoomRelation.query(ItemRoomRelation.item==item.key).fetch()
+			relations += ItemRoomRelation.query(ancestor=inventory.key).filter(ItemRoomRelation.item==item.key).fetch()
 			total_price += item.price
 
 		relation_data = {}
@@ -381,10 +388,16 @@ class AddItemHandler(webapp2.RequestHandler):
 		category = self.request.get("category")
 		room = self.request.get("room")
 
-		items = Item.query(Item.category=="category").fetch()
-		prices = [prices.append(item.price) for item in items]
-		price = sum(prices) / len(prices) if len(prices) > 0 else 0
+		items = Item.query(Item.category==category).fetch()
 
+		if category != '':
+			prices = []
+			for item in items:
+				prices.append(item.price)
+				logging.error(item.price)
+			price = sum(prices) / len(prices) if len(prices) > 0 else 0
+		else:
+			price = 0
 		template_data = {}
 		template_data["category"] = category
 		template_data["price"] = price
@@ -427,7 +440,7 @@ class AddItemHandler(webapp2.RequestHandler):
 			room = Room(name=room_name, parent=residence.key)
 			room.put()
 		
-		relation = ItemRoomRelation(item=item.key, room=room.key)
+		relation = ItemRoomRelation(item=item.key, room=room.key, parent=inventory.key)
 		relation.put()
 
 		if room_name == "no room":
@@ -476,11 +489,11 @@ class DeleteItemHandler(webapp2.RequestHandler):
 
 
 		if item is not None:
-			for relation in ItemRoomRelation.query(ItemRoomRelation.item==item.key).fetch():
+			for relation in ItemRoomRelation.query(ancestor=inventory.key).filter(ItemRoomRelation.item==item.key).fetch():
 				relation.key.delete()
 			item.key.delete()
 
-		self.redirect("admin")
+		self.redirect("home")
 
 
 app = webapp2.WSGIApplication([

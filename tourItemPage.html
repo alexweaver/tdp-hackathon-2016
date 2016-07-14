@@ -122,8 +122,8 @@
       <br>
 
       {% for item in items %}
-        <a class="roomButtons btn btn-warning" href="/add?category={{item.category}}" role="button">
-          {{ item.category }}
+        <a class="roomButtons btn btn-warning" href="/add?category={{item[0]}}" role="button">
+          {{ item[0] }} {{item[1]}}
         </a> <br><br>
       {% endfor %}
   
@@ -137,7 +137,7 @@
 </div>
 
 <div style="height: 5em;"></div>
-<a class="backButtonBottom" href="tourRoomPage.html">
+<a class="backButtonBottom" href="home-tour">
 <h3 style="vertical-align: middle; color: white;"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> Back to Room Selection</h3>
 </a>
 </body>

@@ -26,6 +26,10 @@ class Inventory(ndb.Model):
 		return inventory
 
 
+	@ndb.transactional(xg=True)
+	def get_items(self):
+		return Item.query(ancestor=self.key)
+
 
 class Residence(ndb.Model):
 
@@ -38,7 +42,7 @@ class Residence(ndb.Model):
 		residence = Residence.query(Residence.user_id==user.user_id()).get()
 
 		if residence is None:
-			residence = Residence(user_id=user.user_id())
+			residence = Residence(user_id=user.user_id(), own=False)
 			residence.put()
 
 		return residence
