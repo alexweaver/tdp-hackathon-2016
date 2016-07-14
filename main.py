@@ -123,7 +123,7 @@ class RoomHandler(webapp2.RequestHandler):
 		residence = Residence.get_residence_by_user(user)
 
 		name = self.request.get("name")
-		if name is '':
+		if name == '':	
 			self.response.write('no room name')
 			return
 
@@ -256,18 +256,37 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 			return
 
 		residence = Residence.get_residence_by_user(user)
+		other_homes = Residence.query(Residence.own==residence.own)
 
-		rooms = Room.query().fetch()
-		discovered = Room.query(ancestor=residence.key).fetch()
-		undiscovered = []
+		rooms = []
+		for home in other_homes:
+			rooms += Room.query(ancestor=home.key).fetch()
 
+		room_count = {}
 		for room in rooms:
-			if room not in discovered:
-				data = {"name": room.name, "encoded": urllib.quote(room.name)}
-				undiscovered.append(data)
+			name = room.name
+			if name in room_count:
+				room_count[name] += 1
+				continue
+			room_count[name] = 1
+
+		logging.error(room_count)
+
+		discovered = Room.query(ancestor=residence.key).fetch()
+
+		names = []
+		for d in discovered:
+			names.append(d.name)
+
+		room_count_final = {}
+		for room in room_count:
+			if room not in names:
+				room_count_final[str(room)] = room_count[room]
+
+		room_count_final = sorted(room_count_final.items(), key=lambda x: x[1], reverse=True)
 
 		template = JINJA_ENVIRONMENT.get_template('tourRoomPage.html')
-		template_data = {'rooms': undiscovered}
+		template_data = {'rooms': room_count_final}
 
 		self.response.write(template.render(template_data))
 
@@ -400,7 +419,7 @@ class AddItemHandler(webapp2.RequestHandler):
 			price = 0
 		template_data = {}
 		template_data["category"] = category
-		template_data["price"] = price
+		template_data["price"] = "{0:.2f}".format(price)
 		template_data["room"] = room
 		
 		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
@@ -495,6 +514,25 @@ class DeleteItemHandler(webapp2.RequestHandler):
 
 		self.redirect("home")
 
+class StatusHandler(webapp2.RequestHandler):
+
+	def get(self):
+		
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/welcome')
+			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
+			return
+
+		residence = Residence.get_residence_by_user(user)
+
+		status = self.request.get("status")
+
+		residence.own = (status == "owner")
+		residence.put()
+
+		self.redirect("home-tour")
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
@@ -511,6 +549,7 @@ app = webapp2.WSGIApplication([
 	, ('/home', HomeHandler)
 	, ('/welcome', WelcomeHandler)
 	, ('/delete', DeleteItemHandler)
+	, ('/status', StatusHandler)
 	
 ], debug=True)
 
