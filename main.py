@@ -344,7 +344,7 @@ class HomeHandler(webapp2.RequestHandler):
 		relation_data = {}
 		for relation in relations:
 			item = relation.item.get()
-			item_data = {'category': item.category, 'name': item.name, 'price': item.price}
+			item_data = {'category': item.category, 'name': item.name, 'price': "${0:.2f}".format(item.price), 'encoded': urllib.quote(item.name)}
 
 			if relation.room.get().name in relation_data:
 				relation_data[relation.room.get().name].append(item_data)
@@ -407,6 +407,8 @@ class AddItemHandler(webapp2.RequestHandler):
 			self.response.write(template.render(template_data))
 			return
 
+		residence = Residence.get_residence_by_user(user)
+
 		category = self.request.get('category')
 		name = self.request.get('name')
 		price = self.request.get('price')
@@ -416,21 +418,23 @@ class AddItemHandler(webapp2.RequestHandler):
 		inventory = Inventory.get_inventory_by_user(user)
 		item = Item(category=category, name=name, price=price, parent=inventory.key)
 		item.put()
-		logging.error(item)
+
 		room_name = self.request.get("room")
-		if room_name is not '':
-			residence = Residence.get_residence_by_user(user)
-			room = Room.query(ancestor=residence.key).filter(Room.name==room_name).get()
 
-			relation = ItemRoomRelation(item=item.key, room=room.key)
-			relation.put()
+		residence = Residence.get_residence_by_user(user)
+		room = Room.query(ancestor=residence.key).filter(Room.name==room_name).get()
+		if room is None:
+			room = Room(name=room_name, parent=residence.key)
+			room.put()
+		
+		relation = ItemRoomRelation(item=item.key, room=room.key)
+		relation.put()
 
-		if room_name is '':
+		if room_name == "no room":
 			self.redirect("/home")
 			return
-			
-		self.redirect('/room-tour?room=' + urllib.quote(room_name))
-		
+
+		self.redirect("/room-tour?room=" + urllib.quote(room_name))
 
 class WelcomeHandler(webapp2.RequestHandler):
 
