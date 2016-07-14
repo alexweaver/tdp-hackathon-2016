@@ -24,6 +24,7 @@ from models import Item
 from models import Room
 from models import Residence
 from models import Inventory
+from models import ItemRoomRelation
 from google.appengine.api import users
 
 import jinja2
@@ -76,10 +77,6 @@ class AdminHandler(webapp2.RequestHandler):
 		for room in Room.query().fetch():
 			self.response.write('<tr>')
 			self.response.write('<td>' + str(room.name) + '</td>')
-			self.response.write('<td>' + str(json.dumps(room.item_categories)) + '</td>')
-			self.response.write('<td>' + str(room.own) + '</td>')
-			self.response.write('<td>' + str(room.rent) + '</td>')
-			self.response.write('<td>' + str(room.popularity) + '</td>')
 			self.response.write('</tr>')
 		self.response.write('</table>')
 
@@ -126,17 +123,24 @@ class RoomHandler(webapp2.RequestHandler):
 
 	def post(self):
 
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/welcome')
+			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
+			return
+
+		residence = Residence.get_residence_by_user(user)
+
 		name = self.request.get("name")
-		items = self.request.get("items")
-		own = self.request.get("own")
-		rent = self.request.get("rent")
+		if name is '':
+			self.response.write('no room name')
+			return
 
-		items = items.split(",")
-		own = own == 'on'
-		rent = rent == 'on'
-
-		room = Room(name=name, item_categories=items, own=own, rent=rent, popularity=0)
+		room = Room(name=name, parent=residence.key)
 		room.put()
+
+		self.redirect("/room-tour?room=" + name)
 
 	# def put(self):
 
@@ -148,40 +152,7 @@ class ItemHandler(webapp2.RequestHandler):
 
 
 
-	def post(self):
 
-		user = users.get_current_user()
-
-		if user is None:
-			login_url = users.create_login_url('/home')
-
-			template_data = {}
-			template_data['login_url'] = login_url
-
-			template = JINJA_ENVIRONMENT.get_template('login.html')
-			self.response.write(template.render(template_data))
-			return
-
-		category = self.request.get('category')
-		name = self.request.get('name')
-		price = self.request.get('price')
-
-		price = float(price)
-
-		inventory = Inventory.get_inventory_by_user(user)
-		item = Item(category=category, name=name, price=price, parent=inventory.key)
-		item.put()
-
-		room = self.request.get("room")
-		if room is not '':
-			residence = Residence.get_residence_by_user(user)
-			room = Room.query(Room.name==room & ancestor==residence.key).get()
-
-			relation = ItemRoomRelation(item=item.key, room=room.key)
-			relation.put()
-			
-		self.redirect('/room-tour?room=' + urllib.quote(room.name))
-		return
 
 	def put(self):
 
@@ -333,40 +304,24 @@ class RoomTourHandler(webapp2.RequestHandler):
 		residence = Residence.get_residence_by_user(user)
 		room = Room.query(ancestor=residence.key).filter(Room.name==name).get()
 
-		# ex_residences = Residence.query().fetch() if residence.own is None else Residence.query(Residence.own==residence.own)
-
 		if room is None:
 			room = Room(name=name, parent=residence.key)
 			room.put()
 
+		other_rooms = Room.query(Room.name==name)
 
-		# get all items for the rooms with the same name
-
-		example_rooms = Room.query(Room.name==room.name)
-		
 		relations = []
-		for example_room in example_rooms:
-			relations.append(ItemRoomRelation.query(ItemRoomRelation.room==example_room.key).fetch())
+		for other_room in other_rooms:
+			relations += ItemRoomRelation.query(ItemRoomRelation.room==other_room.key).fetch()
 
 		items = []
-		categories = []
 		for relation in relations:
-			category = relation.item.category
-			item = relation.item
-			
-
-		# if residence.own is None:
-		# 	rooms = ItemRoomRelation.
-		# 	relation = ItemRoomRelation.query(ItemRoomRelation.)
-		# 		item["price"] = Item
-		# for item in items:
-		# 	item 
-
-
-
+			items.append(relation.item.get())
 
 		template = JINJA_ENVIRONMENT.get_template('tourItemPage.html')
-		template_data = {'items': items}
+		template_data = {}
+		template_data['items'] = items
+		template_data['room'] = room.name
 
 
 
@@ -416,16 +371,58 @@ class AddItemHandler(webapp2.RequestHandler):
 			return
 
 		category = self.request.get("category")
-		name = self.request.get("name")
-		price = self.request.get("price")
+		room = self.request.get("room")
+
+		items = Item.query(Item.category=="category").fetch()
+		prices = [prices.append(item.price) for item in items]
+		price = sum(prices) / len(prices) if len(prices) > 0 else 0
 
 		template_data = {}
 		template_data["category"] = category
-		template_data["name"] = name
 		template_data["price"] = price
-
+		template_data["room"] = room
+		
 		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
 		self.response.write(template.render(template_data))
+
+	def post(self):
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/home')
+
+			template_data = {}
+			template_data['login_url'] = login_url
+
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
+			return
+
+		category = self.request.get('category')
+		name = self.request.get('name')
+		price = self.request.get('price')
+
+		price = float(price)
+
+		inventory = Inventory.get_inventory_by_user(user)
+		item = Item(category=category, name=name, price=price, parent=inventory.key)
+		item.put()
+
+		room_name = self.request.get("room")
+		if room_name is not '':
+			residence = Residence.get_residence_by_user(user)
+			room = Room.query(ancestor=residence.key).filter(Room.name==room_name).get()
+
+			relation = ItemRoomRelation(item=item.key, room=room.key)
+			relation.put()
+
+		if room_name is '':
+			self.redirect("/home")
+			return
+			
+		self.redirect('/room-tour?room=' + urllib.quote(room_name))
+		
 
 class WelcomeHandler(webapp2.RequestHandler):
 
@@ -451,7 +448,7 @@ class WelcomeHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
 	, ('/items', ItemHandler)
-	, ('/rooms', RoomHandler)
+	, ('/room', RoomHandler)
 	, ('/admin', AdminHandler)
 	, ('/price', PriceHandler)
 	, ('/value', ValueHandler)
@@ -462,7 +459,7 @@ app = webapp2.WSGIApplication([
 	, ('/add', AddItemHandler)
 	, ('/home', HomeHandler)
 	, ('/welcome', WelcomeHandler)
-
+	
 ], debug=True)
 
 

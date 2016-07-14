@@ -103,14 +103,15 @@
 <div class="row">
   <div class="col-md-1"></div>
   <div class="col-md-10" style="text-align: center;">
-  		<form>
+  		<form method="post" action="/add">
+        <input type="hidden" name="room" value="{{ room }}"></input>
         <div class="form-group">
           <label class="leftFloat" for="exampleInputEmail1">Name</label>
           <input type="text" class="form-control" id="exampleInputEmail1" placeholder="Enter the name of the product">
         </div>
         <div class="form-group">
           <label class="leftFloat" for="exampleInputPassword1">Price</label>
-          <input type="number" class="form-control" id="exampleInputPassword1" placeholder="Enter the value of the product">
+          <input type="number" name="price" class="form-control" id="exampleInputPassword1" value="{{ price }}">
         </div>
         <div class="form-group">
         <label class="leftFloat" for="exampleInputPassword1">Category</label>
