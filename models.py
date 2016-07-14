@@ -6,22 +6,33 @@ class AppUser(ndb.Model):
 
 	username = ndb.StringProperty()
 
-class Bag(ndb.Model):
+class Inventory(ndb.Model):
 
-    userid = ndb.StringProperty()
+    user_id = ndb.StringProperty()
 
     @staticmethod
-    def get_user_bag_key(username):
+    def get_inventory_by_user(user):
+    	inventory = Inventory.query(Inventory.user_id==user.user_id()).get()
 
-    	bag = Bag.query(Bag.userid == username).get()
+    	if inventory is None:
+    		inventory = Inventory(user_id=user.user_id())
+    		inventory.put()
 
-    	if bag is not None:
-    		return bag.key
+    	return inventory
 
-    	else:
-    		bag = Bag(userid = username)
-    		return bag.put()
+class Residence(ndb.Model):
 
+	user_id = ndb.StringProperty()
+
+	@staticmethod
+	def get_residence_by_user(user):
+    	residence = Residence.query(Residence.user_id==username).get()
+
+    	if residence is None:
+    		residence = Residence(user_id=user.user_id())
+    		residence.put()
+
+    	return residence
 
 class Item(ndb.Model):
 
@@ -46,4 +57,6 @@ class Room(ndb.Model):
 			item_categories = item_categories + Item.query(Item.category==category).fetch()
 
 		return item_categories
+
+	
 
