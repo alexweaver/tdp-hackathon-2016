@@ -46,7 +46,7 @@ class MainHandler(webapp2.RequestHandler):
 			greeting = 'Welcome, {}! (<a href="{}">sign out</a>)'.format(
 				nickname, logout_url)
 
-			self.response.write(Bag.get_user_bag_key(user))
+			# self.response.write(Bag.get_user_bag_key(user))
 
 
 		else:
@@ -146,24 +146,42 @@ class RoomHandler(webapp2.RequestHandler):
 
 class ItemHandler(webapp2.RequestHandler):
 
+
+
 	def post(self):
 
-		username = self.request.get("user")
-		app_user = AppUser.query(AppUser.username==username).get()
+		user = users.get_current_user()
 
-		if app_user is None:
-			app_user = AppUser(username=username)
-			app_user.put()
+		if user is None:
+			login_url = users.create_login_url('/home')
 
-		bag_key = Bag.get_user_bag_key(username)
+			template_data = {}
+			template_data['login_url'] = login_url
 
-		name = self.request.get("name")
-		category = self.request.get("category")
-		price = float(self.request.get("price"))
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
+			return
 
-		item = Item(name=name, category=category, price=price, parent=bag_key)
+		category = self.request.get('category')
+		name = self.request.get('name')
+		price = self.request.get('price')
+
+		price = float(price)
+
+		inventory = Inventory.get_inventory_by_user(user)
+		item = Item(category=category, name=name, price=price, parent=inventory.key)
 		item.put()
 
+		room = self.request.get("room")
+		if room is not '':
+			residence = Residence.get_residence_by_user(user)
+			room = Room.query(Room.name==room & ancestor==residence.key).get()
+
+			relation = ItemRoomRelation(item=item.key, room=room.key)
+			relation.put()
+			
+		self.redirect('/room-tour?room=' + urllib.quote(room.name))
+		return
 
 	def put(self):
 
@@ -179,26 +197,26 @@ class ItemHandler(webapp2.RequestHandler):
 
 # Get user inventory
 
-class BagHandler(webapp2.RequestHandler):
+# class BagHandler(webapp2.RequestHandler):
 
-	def get(self):
+# 	def get(self):
 
-		username = self.request.get("user")
-		app_user = AppUser.query(AppUser.username==username).get()
+# 		username = self.request.get("user")
+# 		app_user = AppUser.query(AppUser.username==username).get()
 
-		if app_user is None:
-			app_user = AppUser(username=username)
-			app_user.put()
+# 		if app_user is None:
+# 			app_user = AppUser(username=username)
+# 			app_user.put()
 
-		bag_key = Bag.get_user_bag_key(username)
+# 		bag_key = Bag.get_user_bag_key(username)
 
-		items = Item.query(ancestor=bag_key).fetch()
+# 		items = Item.query(ancestor=bag_key).fetch()
 
-		items_serialized = []
-		for item in items:
-			items_serialized.append(json.dumps(item.to_dict()))
+# 		items_serialized = []
+# 		for item in items:
+# 			items_serialized.append(json.dumps(item.to_dict()))
 
-		self.response.write(items_serialized)
+# 		self.response.write(items_serialized)
 
 # Get average price of a category
 
@@ -306,39 +324,76 @@ class RoomTourHandler(webapp2.RequestHandler):
 			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
 			return
 
-		room = self.request.get("room")
+		name = self.request.get("room")
 
-		if room is '':
+		if name is '':
 			self.response.write("no room specified")
 			return
 
 		residence = Residence.get_residence_by_user(user)
-		
-		
+		room = Room.query(ancestor=residence.key).filter(Room.name==name).get()
 
-		rooms = Room.query(Room.name==room).get()
+		if room is None:
+			room = Room(name=name, parent=residence.key)
+			room.put()
 
 
+		# get all items for the rooms with the same name
 
-		rooms = Room.query().fetch()
-		discovered = Room.query(ancestor=residence.key).fetch()
-		undiscovered = []
+		items = Item.query()
 
-		for room in rooms:
-			if room not in discovered:
-				data = {"name": room.name, "encoded": urllib.quote(room.name)}
-				undiscovered.append(data)
-
-		template = JINJA_ENVIRONMENT.get_template('tourRoomPage.html')
-		template_data = {'rooms': undiscovered}
+		template = JINJA_ENVIRONMENT.get_template('tourItemPage.html')
+		template_data = {'items': items}
 
 		self.response.write(template.render(template_data))
 
-
-class TestHandler(webapp2.RequestHandler):
+class HomeHandler(webapp2.RequestHandler):
 
 	def get(self):
-		self.response.write("bob")
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/home')
+
+			template_data = {}
+			template_data['login_url'] = login_url
+
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
+			return
+
+		inventory = Inventory.get_inventory_by_user(user)
+		items = Item.query(ancestor=inventory.key).fetch()
+
+		template_data = {}
+		template_data['inventory'] = items
+
+
+		template = JINJA_ENVIRONMENT.get_template('userHomePage.html')
+		self.response.write(template.render(template_data))
+
+
+class AddItemHandler(webapp2.RequestHandler):
+
+	def get(self):
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/home')
+
+			template_data = {}
+			template_data['login_url'] = login_url
+
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
+			return
+
+		template_data = {}
+
+		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
+		self.response.write(template.render(template_data))
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
@@ -347,11 +402,13 @@ app = webapp2.WSGIApplication([
 	, ('/admin', AdminHandler)
 	, ('/price', PriceHandler)
 	, ('/value', ValueHandler)
-	, ('/bag', BagHandler)
-	, ('/residence-tour', ResidenceTourHandler)
+	# , ('/bag', BagHandler)
+	, ('/home-tour', ResidenceTourHandler)
 	, ('/room-tour', RoomTourHandler)
 	, ('/room-items', RoomItemHandler)
-	, ('/test', TestHandler)
+	, ('/add', AddItemHandler)
+	, ('/home', HomeHandler)
+
 ], debug=True)
 
 

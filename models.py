@@ -24,6 +24,7 @@ class Inventory(ndb.Model):
 class Residence(ndb.Model):
 
 	user_id = ndb.StringProperty()
+	own = ndb.BooleanProperty()
 
 	@staticmethod
 	def get_residence_by_user(user):
@@ -47,13 +48,11 @@ class Item(ndb.Model):
 	price = ndb.FloatProperty()
 	# img = ndb.BlobProperty()
 
+
+
 class Room(ndb.Model):
 
 	name = ndb.StringProperty()
-	item_categories = ndb.StringProperty(repeated=True)
-	own = ndb.BooleanProperty()
-	rent = ndb.BooleanProperty()
-	popularity = ndb.IntegerProperty()
 
 	def get_item(self):
 
@@ -66,3 +65,7 @@ class Room(ndb.Model):
 
 	
 
+class ItemRoomRelation(ndb.Model):
+
+	item = ndb.KeyProperty(kind=Item)
+	room = ndb.KeyProperty(kind=Room)

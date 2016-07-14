@@ -103,10 +103,9 @@
     <!-- - -->
       <!-- - -->
 
-  		<a class="roomButtons btn btn-primary" href="addItemTour.html" role="button">TV</a> <br><br>
-  		<a class="roomButtons btn btn-primary" href="#" role="button">Couch</a><br><br>
-  		<a class="roomButtons btn btn-primary" href="#" role="button">Coffee Table</a><br><br>
-  		<a class="roomButtons btn btn-primary" href="#" role="button">Rug</a><br><br>
+      {% for item in items %}
+        <a class="roomButtons btn btn-primary" href="/add" role="button">{{ item.category }}</a> <br><br>
+      {% endfor %}
   
 <!-- - -->
       <!-- - -->

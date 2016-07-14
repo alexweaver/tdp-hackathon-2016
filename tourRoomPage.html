@@ -93,7 +93,7 @@
   		<!-- - -->
   		<!-- - -->
       {% for room in rooms %}
-  		  <a class="roomButtons btn btn-primary" href="/room?={{room.encoded }}" role="button">{{ room.name }}</a> <br><br>
+  		  <a class="roomButtons btn btn-primary" href="/room-tour?room={{ room.encoded }}" role="button">{{ room.name }}</a> <br><br>
       {% endfor %}
 
   		<!-- - -->
