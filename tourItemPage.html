@@ -123,7 +123,7 @@
 
       {% for item in items %}
         <a class="roomButtons btn btn-warning" href="/add?category={{item[0]}}&room={{room}}" role="button">
-          {{ item[0] }} {{item[1]}}
+          {{ item[0] }} <span class="badge" style="background-color:white">{{item[1]}}</span>
         </a> <br><br>
       {% endfor %}
   
