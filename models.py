@@ -3,9 +3,13 @@ from google.appengine.ext import ndb
 
 import logging
 
+
+
 class AppUser(ndb.Model):
 
 	username = ndb.StringProperty()
+
+
 
 class Inventory(ndb.Model):
 
@@ -21,6 +25,8 @@ class Inventory(ndb.Model):
 
 		return inventory
 
+
+
 class Residence(ndb.Model):
 
 	user_id = ndb.StringProperty()
@@ -29,17 +35,15 @@ class Residence(ndb.Model):
 	@staticmethod
 	def get_residence_by_user(user):
 
-		logging.debug("1")
 		residence = Residence.query(Residence.user_id==user.user_id()).get()
-
-		logging.debug("2")
 
 		if residence is None:
 			residence = Residence(user_id=user.user_id())
 			residence.put()
 
-		logging.debug("bo")
 		return residence
+
+
 
 class Item(ndb.Model):
 

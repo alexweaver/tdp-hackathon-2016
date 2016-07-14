@@ -104,7 +104,9 @@
       <!-- - -->
 
       {% for item in items %}
-        <a class="roomButtons btn btn-primary" href="/add" role="button">{{ item.category }}</a> <br><br>
+        <a class="roomButtons btn btn-primary" href="/add?category={{item.category}}" role="button">
+          {{ item.category }}
+        </a> <br><br>
       {% endfor %}
   
 <!-- - -->

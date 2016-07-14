@@ -390,7 +390,14 @@ class AddItemHandler(webapp2.RequestHandler):
 			self.response.write(template.render(template_data))
 			return
 
+		category = self.request.get("category")
+		name = self.request.get("name")
+		price = self.request.get("price")
+
 		template_data = {}
+		template_data["category"] = category
+		template_data["name"] = name
+		template_data["price"] = price
 
 		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
 		self.response.write(template.render(template_data))
