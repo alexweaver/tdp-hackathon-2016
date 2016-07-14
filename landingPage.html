@@ -38,6 +38,19 @@
 }
 
 </style>
+
+<script type="text/javascript">
+  
+function checkSelection(){
+if (document.getElementById("option1").checked == true){ 
+      window.location.href = "/status?status=owner";
+} else if (document.getElementById("option2").checked == true) {
+      window.location.href = "/status?status=renter";
+}
+};
+
+</script>
+
 <meta charset="UTF-8">
 </head>
 
@@ -81,15 +94,15 @@
       <div class="modal-body" style="text-align: center;">
         	<div class="btn-group" data-toggle="buttons">
 				  <label class="btn btn-primary active">
-				    <input type="radio" name="options" id="option1" autocomplete="off" checked> Homeowner
+				    <input type="radio" name="homeowner" id="option1" autocomplete="off"> Homeowner
 				  </label>
 				  <label class="btn btn-primary">
-				    <input type="radio" name="options" id="option2" autocomplete="off"> Renter
+				    <input type="radio" name="renter" id="option2" autocomplete="off"> Renter
 				  </label>
 			</div>
       </div>
       <div class="modal-footer">
-        <a href="tourRoomPage.html" type="button" class="btn btn-warning">Start Tour <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+        <button type="button" class="btn btn-warning" onclick="checkSelection()">Start Tour <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
       </div>
     </div>
   </div>
