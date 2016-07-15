@@ -54,7 +54,7 @@ class Item(ndb.Model):
 	name = ndb.StringProperty()
 	category = ndb.StringProperty()
 	price = ndb.FloatProperty()
-	# img = ndb.BlobProperty()
+	img = ndb.BlobProperty()
 
 
 

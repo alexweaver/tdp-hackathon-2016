@@ -27,6 +27,7 @@ from models import Inventory
 from models import ItemRoomRelation
 from google.appengine.api import users
 
+from google.appengine.ext import ndb
 import jinja2
 import os
 
@@ -117,7 +118,7 @@ class RoomHandler(webapp2.RequestHandler):
 
 		residence = Residence.get_residence_by_user(user)
 
-		name = self.request.get("name")
+		name = self.request.get("name").strip()
 		if name == '':	
 			self.response.write('no room name')
 			return
@@ -132,22 +133,6 @@ class RoomHandler(webapp2.RequestHandler):
 	# 	name = self.request.get("name")
 
 # Create item
-
-class ItemHandler(webapp2.RequestHandler):
-
-
-
-	def put(self):
-
-		username = self.request.get("user")
-		app_user = AppUser.query(AppUser.username==username).get()
-
-		if app_user is None:
-			app_user = AppUser(username=username)
-			app_user.put()
-
-	def delete(self):
-		pass
 
 # Get user inventory
 
@@ -251,7 +236,11 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 			return
 
 		residence = Residence.get_residence_by_user(user)
+		inventory = Inventory.get_inventory_by_user(user)
+
 		other_homes = Residence.query(Residence.own==residence.own)
+
+		discovered = Room.query(ancestor=residence.key).fetch()
 
 		rooms = []
 		for home in other_homes:
@@ -265,19 +254,24 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 				continue
 			room_count[name] = 1
 
-		logging.error(room_count)
-
-		discovered = Room.query(ancestor=residence.key).fetch()
-
-		names = []
-		for d in discovered:
-			names.append(d.name)
-
 		room_count_final = {}
 		for room in room_count:
-			if room not in names:
-				room_count_final[str(room)] = room_count[room]
-
+			my_count = Room.query(ancestor=residence.key).filter(Room.name==room).count()
+			if my_count == 0:
+				room_count_final[str(room)] = room_count[room] / max(other_homes.count(), 1)
+			else:
+				up_count = str(my_count + 1)
+				my_tail = ""
+				if up_count[-1:] in ["0", "4", "5", "6", "7", "8", "9"]:
+					my_tail = "th"
+				elif up_count[-1:] in ["2"]:
+					my_tail = "nd"
+				elif up_count[-1:] in ["1"]:
+					my_tail = "st"
+				elif up_count[-1:] in ["3"]:
+					my_tail = "rd"
+				room_count_final[str(room) + " (" + up_count + my_tail + ")"] = room_count[room] / max(other_homes.count(), 1) - my_count
+		
 		room_count_final = sorted(room_count_final.items(), key=lambda x: x[1], reverse=True)
 
 		template = JINJA_ENVIRONMENT.get_template('tourRoomPage.html')
@@ -522,8 +516,7 @@ class StatusHandler(webapp2.RequestHandler):
 		user = users.get_current_user()
 
 		if user is None:
-			login_url = users.create_login_url('/welcome')
-			self.response.write('<html><body>{}</body></html>'.format('<a href="' + login_url + '">Sign in</a>'))
+			self.redirect("/")
 			return
 
 		residence = Residence.get_residence_by_user(user)
@@ -537,15 +530,10 @@ class StatusHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
-	, ('/item', ItemHandler)
 	, ('/room', RoomHandler)
 	, ('/admin', AdminHandler)
-	, ('/price', PriceHandler)
-	, ('/value', ValueHandler)
-	# , ('/bag', BagHandler)
 	, ('/home-tour', ResidenceTourHandler)
 	, ('/room-tour', RoomTourHandler)
-	, ('/room-items', RoomItemHandler)
 	, ('/add', AddItemHandler)
 	, ('/home', HomeHandler)
 	, ('/welcome', WelcomeHandler)
