@@ -273,7 +273,7 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 					my_tail = "rd"
 				room_count_final[str(room)] = (" (" + up_count + my_tail + ")", room_count[room] / max(len(other_homes), 1) - 2 * my_count)
 		
-		room_count_final = sorted(room_count_final.items(), key=lambda x: x[1], reverse=True)
+		room_count_final = sorted(room_count_final.items(), key=lambda x: x[1][1], reverse=True)
 
 		template = JINJA_ENVIRONMENT.get_template('tourRoomPage.html')
 		template_data = {'rooms': room_count_final}
@@ -344,7 +344,7 @@ class RoomTourHandler(webapp2.RequestHandler):
 				item_count_final[str(item)] = ("(" + up_count + my_tail + ")", item_count[item] / max(len(other_rooms), 1) - 2 * my_count)
 				
 
-		item_count_final = sorted(item_count_final.items(), key=lambda x: x[1], reverse=True)
+		item_count_final = sorted(item_count_final.items(), key=lambda x: x[1][1], reverse=True)
 
 		logging.error(item_count_final)
 
@@ -465,13 +465,22 @@ class AddItemHandler(webapp2.RequestHandler):
 		name = self.request.get('name')
 		price = self.request.get('price')
 
+
+		room_name = self.request.get("room")
+
+		if name.strip() == '' or category.strip() == '':
+			if room_name == "miscellaneous":
+				self.redirect("home")
+			else:
+				self.redirect("/room-tour?room=" + urllib.quote(room_name))
+			return
+
 		price = float(price)
 
 		inventory = Inventory.get_inventory_by_user(user)
 		item = Item(category=category, name=name, price=price, parent=inventory.key)
 		item.put()
 
-		room_name = self.request.get("room")
 
 		residence = Residence.get_residence_by_user(user)
 		room = Room.query(ancestor=residence.key).filter(Room.name==room_name).get()
@@ -607,7 +616,7 @@ class PieHandler(webapp2.RequestHandler):
 		template_data = {}
 		template_data['relations'] = relation_data_final
 
-		self.response.write(template_data)
+		self.response.write(json.dumps(relation_data_final))
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
