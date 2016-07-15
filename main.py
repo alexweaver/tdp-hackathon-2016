@@ -240,7 +240,7 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 
 		other_homes = Residence.query(Residence.own==residence.own).fetch()
 
-		discovered = Room.query(ancestor=residence.key).fetch()
+		logging.error(other_homes)
 
 		rooms = []
 		for home in other_homes:
@@ -549,12 +549,65 @@ class StatusHandler(webapp2.RequestHandler):
 		residence = Residence.get_residence_by_user(user)
 
 		status = self.request.get("status")
-		logging.error(status)
 
-		residence.own = (status == "owner")
+		residence.own = True if status == "owner" else False
+		logging.error(residence.own)
 		residence.put()
 
 		self.redirect("home-tour")
+
+class PieHandler(webapp2.RequestHandler):
+
+	def get(self):
+
+		user = users.get_current_user()
+
+		if user is None:
+			login_url = users.create_login_url('/home')
+
+			template_data = {}
+			template_data['login_url'] = login_url
+
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			self.response.write(template.render(template_data))
+			return
+
+		inventory = Inventory.get_inventory_by_user(user)
+		items = inventory.get_items().fetch()
+
+		logout_url = users.create_logout_url("/")
+
+		relations = []
+		for item in items:
+			relations += ItemRoomRelation.query(ancestor=inventory.key).filter(ItemRoomRelation.item==item.key).fetch()
+
+		i = 0
+		relation_data = {}
+		for relation in relations:
+			i += 1
+			if i > 5:
+				break
+			room_name = relation.room.get().name
+			if room_name in relation_data:
+				relation_data[room_name] += relation.item.get().price
+			else:
+				relation_data[room_name] = relation.item.get().price
+
+
+		i = 0
+		cols = ["#4789b", "#EF7014", "#4BA449", "#154995", "#757374"]
+
+		relation_data_final = []
+		for k in relation_data:
+			i += 1
+			relation_data_final.append({"title": str(k), "value": relation_data[k], "color": cols[i]})
+
+		relation_data_final = sorted(relation_data_final, key=lambda x: x["value"], reverse=True)
+
+		template_data = {}
+		template_data['relations'] = relation_data_final
+
+		self.response.write(template_data)
 
 app = webapp2.WSGIApplication([
 	('/', MainHandler)
@@ -567,7 +620,7 @@ app = webapp2.WSGIApplication([
 	, ('/welcome', WelcomeHandler)
 	, ('/delete', DeleteItemHandler)
 	, ('/status', StatusHandler)
-	
+	, ('/pie', PieHandler)
 ], debug=True)
 
 
