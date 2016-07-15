@@ -15,10 +15,17 @@
 <style type="text/css">
 
 .navbar {
-	background-color: #20549D;
-	height: 3em;
-	width: 100%;
-	border-radius: 0;
+  background-color: #20549D;
+  height: 3em;
+  width: 100%;
+  border-radius: 0;
+  position: fixed;
+  z-index: 2;
+}
+
+.underNavBar {
+  height: 3em;
+  width: 100%;
 }
 
 .logoImage {
@@ -80,7 +87,8 @@
 <div class="navbar">
 	<a href="home"><img class="logoImage" src="http://logos-download.com/wp-content/uploads/2016/06/Geico_logo_blue_bg.png"></a>
 </div>
-
+<div class="underNavBar">
+</div>
 
 
 <div class="container">
@@ -100,9 +108,9 @@
 
       <form method="post" action="room">
           <div class="input-group">
-            <input name="name" style="height: 3em" type="text" class="form-control" placeholder="Type Room Name...">
+            <input name="name" style="height: 3em;z-index: 0;" type="text" class="form-control" placeholder="Type Room Name...">
             <span class="input-group-btn">
-              <button style="background-color: #259106; color: white; height: 3em;" class="btn btn-default" type="submit"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Room</button>
+              <button style="background-color: #259106; color: white; height: 3em;z-index: 0;" class="btn btn-default" type="submit"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Room</button>
             </span>
           </div><!-- /input-group -->
       </form>

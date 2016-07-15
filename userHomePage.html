@@ -11,6 +11,7 @@
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="pieChart.js"></script>
 
 <style type="text/css">
 
@@ -19,6 +20,13 @@
 	height: 3em;
 	width: 100%;
 	border-radius: 0;
+	position: fixed;
+	z-index: 1;
+}
+
+.underNavBar {
+	height: 3em;
+	width: 100%;
 }
 
 .logoImage {
@@ -77,6 +85,74 @@
 	font-size: 4em;
 }
 
+/*-------------------------------------------------------*/
+@import "bourbon";
+
+@import url(//fonts.googleapis.com/css?family=Oswald:400);
+body {
+  font-family: "Oswald", sans-serif;
+}
+.chart {
+	display:block;
+  width: auto;
+  height: 28em;
+  top: 50%;
+  left: 50%;
+}
+.doughnutTip {
+  position: absolute;
+  min-width: 30px;
+  max-width: 300px;
+  padding: 5px 15px;
+  border-radius: 1px;
+  background: rgba(0,0,0,.8);
+  color: #ddd;
+  font-size: 17px;
+  text-shadow: 0 1px 0 #000;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.3;
+  letter-spacing: .06em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  pointer-events: none;
+  &::after {
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      content: "";
+      height: 0;
+      margin: 0 0 0 -6px;
+      border-right: 5px solid transparent;
+      border-left: 5px solid transparent;
+      border-top: 6px solid rgba(0,0,0,.7);
+      line-height: 0;
+  }
+}
+.doughnutSummary {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: #d5d5d5;
+  text-align: center;
+  cursor: default;
+}
+.doughnutSummaryTitle {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  margin-top: -120%;
+  font-size: 22px;
+  letter-spacing: .06em;
+  color: #24272A;
+}
+.doughnutSummaryNumber {
+  position: absolute;
+  top: -40%;
+  width: 100%;
+  font-size: 55px;
+  color: #85bb65;
+}
+
 </style>
 <meta charset="UTF-8">
 </head>
@@ -85,6 +161,8 @@
 
 <div class="navbar">
 	<a href="home"><img class="logoImage" src="http://logos-download.com/wp-content/uploads/2016/06/Geico_logo_blue_bg.png"></a>
+</div>
+<div class="underNavBar">
 </div>
 
 
@@ -100,9 +178,9 @@
 <div class="row">
   <div class="col-md-1"></div>
   <div class="col-md-10" style="text-align: center;">
-  		<h3>Total Inventory Value:</h3>
-  		<h1 class="priceText">{{ total_price }}</h1>
-  		<br>
+
+  		<div id="doughnutChart" class="chart"></div>
+
   		<hr>
 
   		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
