@@ -53,7 +53,7 @@ $(function(){
         tipOffsetY: -45,
         tipClass: "doughnutTip",
         summaryClass: "doughnutSummary",
-        summaryTitle: "TOTAL:",
+        summaryTitle: "Total Value:",
         summaryTitleClass: "doughnutSummaryTitle",
         summaryNumberClass: "doughnutSummaryNumber",
         beforeDraw: function() {  },
@@ -222,7 +222,7 @@ $(function(){
     function drawDoughnutText(animationDecimal, segmentTotal) {
       $summaryNumber
         .css({opacity: animationDecimal})
-        .text((segmentTotal * animationDecimal).toFixed(1));
+        .text('$'+(segmentTotal * animationDecimal).toFixed(2));
     }
     function animateFrame(cnt, drawData) {
       var easeAdjustedAnimationPercent =(settings.animation)? CapValue(easingFunction(cnt), null, 0) : 1;
@@ -377,7 +377,6 @@ body {
 }
 .doughnutSummary {
   position: absolute;
-  top: 50%;
   left: 50%;
   color: #d5d5d5;
   text-align: center;
@@ -387,14 +386,14 @@ body {
   position: absolute;
   top: 50%;
   width: 100%;
-  margin-top: -120%;
+  margin-top: -145%;
   font-size: 22px;
   letter-spacing: .06em;
   color: #24272A;
 }
 .doughnutSummaryNumber {
   position: absolute;
-  top: -40%;
+  top: -70%;
   width: 100%;
   font-size: 55px;
   color: #85bb65;
