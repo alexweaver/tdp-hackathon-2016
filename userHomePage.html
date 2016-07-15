@@ -141,8 +141,8 @@
 	{% for item in relations[room] %}
 	{% if i.append(i.pop() + 1) %}{% endif %} {# increment i by 1 #}
 		  <div class="panel panel-default">
-		    <div class="panel-heading" role="tab" id="heading{{ i[0] }}" data-toggle="collapse" data-parent="#accordion" href="#{{ i[0] }}" aria-expanded="false" aria-controls="{{ room }}{{ encoded }}">
-		      <h4 class="panel-title">
+		    <a href="#{{ i[0] }}"><div class="panel-heading" role="tab" id="heading{{ i[0] }}" data-toggle="collapse" data-parent="#accordion"  aria-expanded="false" aria-controls="{{ room }}{{ encoded }}"></a>
+		      <p class="panel-title">
 		          {{ item.name }}
 		      </p>
 		    </div>
