@@ -238,13 +238,13 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 		residence = Residence.get_residence_by_user(user)
 		inventory = Inventory.get_inventory_by_user(user)
 
-		other_homes = Residence.query(Residence.own==residence.own)
+		other_homes = Residence.query(Residence.own==residence.own).fetch()
 
 		discovered = Room.query(ancestor=residence.key).fetch()
 
 		rooms = []
 		for home in other_homes:
-			rooms += Room.query(ancestor=home.key).fetch()
+			rooms += Room.query(ancestor=home.key).filter(Room.name!="miscellaneous").fetch()
 
 		room_count = {}
 		for room in rooms:
@@ -257,8 +257,9 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 		room_count_final = {}
 		for room in room_count:
 			my_count = Room.query(ancestor=residence.key).filter(Room.name==room).count()
+
 			if my_count == 0:
-				room_count_final[str(room)] = room_count[room] / max(other_homes.count(), 1)
+				room_count_final[str(room)] = ("", room_count[room] / max(len(other_homes), 1))
 			else:
 				up_count = str(my_count + 1)
 				my_tail = ""
@@ -270,7 +271,7 @@ class ResidenceTourHandler(webapp2.RequestHandler):
 					my_tail = "st"
 				elif up_count[-1:] in ["3"]:
 					my_tail = "rd"
-				room_count_final[str(room) + " (" + up_count + my_tail + ")"] = room_count[room] / max(other_homes.count(), 1) - my_count
+				room_count_final[str(room)] = (" (" + up_count + my_tail + ")", room_count[room] / max(len(other_homes), 1) - 2 * my_count)
 		
 		room_count_final = sorted(room_count_final.items(), key=lambda x: x[1], reverse=True)
 
@@ -304,12 +305,11 @@ class RoomTourHandler(webapp2.RequestHandler):
 			room = Room(name=name, parent=residence.key)
 			room.put()
 
-		other_rooms = Room.query(Room.name==name)
+		other_rooms = Room.query(Room.name==name).fetch()
 
 		relations = []
 		for other_room in other_rooms:
 			relations += ItemRoomRelation.query(ItemRoomRelation.room==other_room.key).fetch()
-
 
 		item_count = {}
 		for relation in relations:
@@ -319,11 +319,38 @@ class RoomTourHandler(webapp2.RequestHandler):
 				continue
 			item_count[category] = 1
 
-		item_count = sorted(item_count.items(), key=lambda x: x[1], reverse=True)
+		logging.error(item_count)
+
+		inventory = Inventory.get_inventory_by_user(user)
+
+		item_count_final = {}
+		for item in item_count:
+			my_count = Item.query(ancestor=inventory.key).filter(Item.category==item).count()
+
+			if my_count == 0:
+				item_count_final[str(item)] = ("", item_count[item] / max(len(other_rooms), 1))
+			else:
+				up_count = str(my_count + 1)
+				my_tail = ""
+				if up_count[-1:] in ["0", "4", "5", "6", "7", "8", "9"]:
+					my_tail = "th"
+				elif up_count[-1:] in ["2"]:
+					my_tail = "nd"
+				elif up_count[-1:] in ["1"]:
+					my_tail = "st"
+				elif up_count[-1:] in ["3"]:
+					my_tail = "rd"
+				logging.error( "(" + up_count + my_tail + ")")
+				item_count_final[str(item)] = ("(" + up_count + my_tail + ")", item_count[item] / max(len(other_rooms), 1) - 2 * my_count)
+				
+
+		item_count_final = sorted(item_count_final.items(), key=lambda x: x[1], reverse=True)
+
+		logging.error(item_count_final)
 
 		template = JINJA_ENVIRONMENT.get_template('tourItemPage.html')
 		template_data = {}
-		template_data['items'] = item_count
+		template_data['items'] = item_count_final
 		template_data['room'] = room.name
 
 
@@ -413,7 +440,7 @@ class AddItemHandler(webapp2.RequestHandler):
 		template_data["category"] = category
 		template_data["price"] = "{0:.2f}".format(price)
 		template_data["room"] = room
-		template_data['back_url'] = "/home" if room == "no room" else "/room-tour?room=" + room
+		template_data['back_url'] = "/home" if room == "miscellaneous" else "/room-tour?room=" + room
 		
 		template = JINJA_ENVIRONMENT.get_template('addItemTour.html')
 		self.response.write(template.render(template_data))
@@ -455,7 +482,7 @@ class AddItemHandler(webapp2.RequestHandler):
 		relation = ItemRoomRelation(item=item.key, room=room.key, parent=inventory.key)
 		relation.put()
 
-		if room_name == "no room":
+		if room_name == "miscellaneous":
 			self.redirect("/home")
 			return
 
@@ -522,6 +549,7 @@ class StatusHandler(webapp2.RequestHandler):
 		residence = Residence.get_residence_by_user(user)
 
 		status = self.request.get("status")
+		logging.error(status)
 
 		residence.own = (status == "owner")
 		residence.put()
