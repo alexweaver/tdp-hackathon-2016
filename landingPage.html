@@ -15,10 +15,17 @@
 <style type="text/css">
 
 .navbar {
-	background-color: #20549D;
-	height: 3em;
-	width: 100%;
-	border-radius: 0;
+  background-color: #20549D;
+  height: 3em;
+  width: 100%;
+  border-radius: 0;
+  position: fixed;
+  z-index: 1;
+}
+
+.underNavBar {
+  height: 3em;
+  width: 100%;
 }
 
 .logoImage {
@@ -59,7 +66,8 @@ if (document.getElementById("option1").checked == true){
 <div class="navbar">
 	<img class="logoImage" src="http://logos-download.com/wp-content/uploads/2016/06/Geico_logo_blue_bg.png">
 </div>
-
+<div class="underNavBar">
+</div>
 
 <!--   -->
 
@@ -67,8 +75,6 @@ if (document.getElementById("option1").checked == true){
 <div class="container">
 
 <div class="row">
-  <div class="col-md-1"></div>
-  <div class="col-md-10" style="text-align: center;"><h3>Welcome Message</h3><br></div>
   <div class="col-md-1"></div>
 </div>
 
@@ -93,11 +99,11 @@ if (document.getElementById("option1").checked == true){
       </div>
       <div class="modal-body" style="text-align: center;">
         	<div class="btn-group" data-toggle="buttons">
-				  <label class="btn btn-primary active">
-				    <input type="radio" name="homeowner" id="option1" autocomplete="off" checked> Homeowner
-				  </label>
 				  <label class="btn btn-primary">
-				    <input type="radio" name="renter" id="option2" autocomplete="off"> Renter
+				    <input type="radio" name="homeowner" id="option1" autocomplete="off"> Homeowner
+				  </label>
+				  <label class="btn btn-primary active">
+				    <input type="radio" name="renter" id="option2" autocomplete="off" checked> Renter
 				  </label>
 			</div>
       </div>
